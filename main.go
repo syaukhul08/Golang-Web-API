@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"pustaka-api/book"
 	"pustaka-api/handler"
@@ -22,48 +21,22 @@ func main() {
 
 	db.AutoMigrate(&book.Book{})
 
-	//CRUD
-	// book := book.Book{}
-	// book.Title = "Biologi"
-	// book.Price = 90000
-	// book.Discount = 20
-	// book.Rating = 5
-	// book.Description = "Buku pelajaran biologi"
+	bookRepository := book.NewRepository(db)
 
-	// err = db.Create(&book).Error
-	// if err != nil {
-	// 	fmt.Println("==================")
-	// 	fmt.Println("Error creating book record")
-	// 	fmt.Println("===================")
-	// }
+	bookService := book.NewService(bookRepository)
 
-	var book book.Book
-
-	err = db.Debug().Where("id = ?", 4).Find(&book).Error
-	if err != nil {
-		fmt.Println("==================")
-		fmt.Println("Error finding book record")
-		fmt.Println("===================")
-	}
-
-	book.Title = "Sejarah Kemerdekaan Indonesia"
-	err = db.Save(&book).Error
-	if err != nil {
-		fmt.Println("==================")
-		fmt.Println("Error updating book record")
-		fmt.Println("===================")
-	}
+	bookHandler := handler.NewBookHandler(bookService)
 
 	router := gin.Default()
 	router.SetTrustedProxies([]string{"192.168.1.2"})
 
 	v1 := router.Group("/v1")
 
-	v1.GET("/", handler.RootHandler)
-	v1.GET("/hello", handler.HelloHandler)
-	v1.GET("/books/:id/:title", handler.BooksHandler)
-	v1.GET("/query", handler.QueryHandler)
-	v1.POST("/books", handler.PostBookHandler)
+	v1.GET("/books", bookHandler.GetBooks)
+	v1.GET("/books/:id", bookHandler.GetBook)
+	v1.POST("/books", bookHandler.CreateBook)
+	v1.PUT("/books/:id", bookHandler.UpdateBook)
+	v1.DELETE("/books/:id", bookHandler.DeleteBook)
 
-	router.Run(":8008")
+	router.Run(":5430")
 }
